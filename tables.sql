@@ -85,20 +85,19 @@ CREATE TABLE DELIVERY(
     PRIMARY KEY(ID)
 );
 
-CREATE TABLE ORDER(
+CREATE TABLE `ORDER`(
     Item_UPC            VARCHAR(30)     NOT NULL,
     Amount_of_Item      INT             NOT NULL,
     Order_Date          DATE            NOT NULL, 
-    Delivery_Status     INT             NOT NULL, 
-    Delivery_ID         VARCHAR(30)     NOT NULL,
+    Delivery_Status     ENUM('yes', 'no')   NOT NULL, 
+    Delivery_ID         VARCHAR(30),
     PRIMARY KEY(Item_UPC, Amount_of_Item, Order_Date, Delivery_Status),
     FOREIGN KEY(Item_UPC) REFERENCES ITEM(UPC)
         ON UPDATE CASCADE
         ON DELETE RESTRICT,
     FOREIGN KEY(Delivery_ID) REFERENCES DELIVERY(ID)
         ON UPDATE CASCADE
-        ON DELETE SET NULL,
-    CONSTRAINT order_info UNIQUE(Item_UPC, Amount_of_Item, Order_Date, Delivery_Status)
+        ON DELETE SET NULL
 );
 
 CREATE TABLE CUSTOMER(
@@ -128,10 +127,7 @@ CREATE TABLE PURCHASE(
     FOREIGN KEY(Item_UPC) REFERENCES ITEM(UPC)
         ON UPDATE CASCADE
         ON DELETE RESTRICT,
-    FOREIGN KEY(Transaction_ID) REFERENCES TRANSACTION(ID)
-        ON UPDATE CASCADE
-        ON DELETE RESTRICT,
-    FOREIGN KEY(Customer_Phone_Number) REFERENCES TRANSACTION(Customer_Phone_Number)
+    FOREIGN KEY(Transaction_ID, Customer_Phone_Number) REFERENCES TRANSACTION(ID, Customer_Phone_Number)
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 );
