@@ -1,3 +1,7 @@
+/*  tables.sql
+    Epiphany Chua
+    echua@csu.fullerton.edu
+*/
 -- DROPS ALL TABLES WITH THE SAME NAME
 SET foreign_key_checks = 0;
 DROP TABLE IF EXISTS SUPPLIER, DEPARTMENT, EMPLOYEE, SUPERVISES, ITEM,
@@ -109,7 +113,7 @@ CREATE TABLE `ORDER`(
 CREATE TABLE CUSTOMER(
     Phone_Number        VARCHAR(10)     NOT NULL UNIQUE,
     Name                VARCHAR(30),
-    PRIMARY KEY(Phone_Number, Name)
+    PRIMARY KEY(Phone_Number)
 );
 
 CREATE TABLE TRANSACTION(
