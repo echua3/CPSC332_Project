@@ -21,14 +21,20 @@ CREATE TABLE EMPLOYEE(
     Department_Name     VARCHAR(30),
     PRIMARY KEY(ID), 
     FOREIGN KEY(Department_Name) REFERENCES DEPARTMENT(Name)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL
 );
 
 CREATE TABLE SUPERVISES(
     Department_Name     VARCHAR(30)     NOT NULL,
     Employee_ID         VARCHAR(30)     NOT NULL,
     PRIMARY KEY(Department_Name, Employee_ID),
-    FOREIGN KEY(Department_Name) REFERENCES DEPARTMENT(Name),
+    FOREIGN KEY(Department_Name) REFERENCES DEPARTMENT(Name)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
     FOREIGN KEY(Employee_ID) REFERENCES EMPLOYEE(ID)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
 );
 
 CREATE TABLE ITEM(
@@ -41,20 +47,26 @@ CREATE TABLE ITEM(
     Department_Name     VARCHAR(30),
     Supplier_ID         VARCHAR(30),
     PRIMARY KEY(UPC), 
-    FOREIGN KEY(Department_Name) REFERENCES DEPARTMENT(Name),
+    FOREIGN KEY(Department_Name) REFERENCES DEPARTMENT(Name)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
     FOREIGN KEY(Supplier_ID) REFERENCES SUPPLIER(ID)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL
 );
 
 CREATE TABLE LOCATION(
     Aisle_Number            INT         NOT NULL,
-    Aisle_Side              INT         NOT NULL,
+    Aisle_Side              ENUM('right', 'left')         NOT NULL,
     Section_Number          INT         NOT NULL,
     Shelf_Number            INT         NOT NULL,
     Number_of_Items_Down    INT         NOT NULL,
-    Item_UPC       INT,
+    Item_UPC                VARCHAR(30),
     PRIMARY KEY(Aisle_Number, Aisle_Side, Section_Number, Shelf_Number, Number_of_Items_Down, Item_UPC), 
-    FOREIGN KEY(Item_UPC) REFERENCES ITEM(UPC),
-    CONSTRAINT item_location UNIQUE(Aisle_Number, Aisle_Side, Section_Number, Shelf_Number, Number_of_Items_Down)
+    FOREIGN KEY(Item_UPC) REFERENCES ITEM(UPC)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+    CONSTRAINT item_location UNIQUE (Aisle_Number, Aisle_Side, Section_Number, Shelf_Number, Number_of_Items_Down)
 );
 
 CREATE TABLE EXPIRATION(
@@ -62,6 +74,8 @@ CREATE TABLE EXPIRATION(
     Expiration_Date     DATE            NOT NULL,
     PRIMARY KEY(Item_UPC, Expiration_Date),
     FOREIGN KEY(Item_UPC) REFERENCES ITEM(UPC)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE, -- deletes expiration relation if item deleted
 );
 
 CREATE TABLE DELIVERY(
@@ -77,10 +91,14 @@ CREATE TABLE ORDER(
     Amount_of_Item      INT             NOT NULL,
     Order_Date          DATE            NOT NULL, 
     Delivery_Status     INT             NOT NULL, 
-    Delivery_ID         VARCHAR(30)     NOT NULL;
+    Delivery_ID         VARCHAR(30)     NOT NULL,
     PRIMARY KEY(Item_UPC, Amount_of_Item, Order_Date, Delivery_Status),
-    FOREIGN KEY(Item_UPC) REFERENCES ITEM(UPC),
-    FOREIGN KEY(Delivery_ID) REFERENCES DELIVERY(ID),
+    FOREIGN KEY(Item_UPC) REFERENCES ITEM(UPC)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    FOREIGN KEY(Delivery_ID) REFERENCES DELIVERY(ID)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
     CONSTRAINT order_info UNIQUE(Item_UPC, Amount_of_Item, Order_Date, Delivery_Status)
 );
 
@@ -90,15 +108,70 @@ CREATE TABLE CUSTOMER(
     PRIMARY KEY(Phone_Number, Name)
 );
 
+CREATE TABLE TRANSACTION(
+    ID                      VARCHAR(30)     NOT NULL,
+    Customer_Phone_Number   VARCHAR(10)     NOT NULL,
+    Transaction_Date        DATE,
+    Transaction_Time        TIME, 
+    PRIMARY KEY(ID, Customer_Phone_Number),
+    FOREIGN KEY(Customer_Phone_Number) REFERENCES CUSTOMER(Phone_Number)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT transaction UNIQUE(ID, Transaction_ID)
+);
+
 CREATE TABLE PURCHASE(
-    Item_UPC            VARCHAR(30)     NOT NULL,
-    Transaction_ID      INT             NOT NULL,
-    Customer_Phone_Number          DATE            NOT NULL, 
-    Number_Bought     INT             NOT NULL, 
-    Price_Paid         VARCHAR(30)     NOT NULL;
+    Item_UPC                VARCHAR(30)     NOT NULL,
+    Transaction_ID          VARCHAR(30)     NOT NULL,
+    Customer_Phone_Number   VARCHAR(10)     NOT NULL, 
+    Number_Bought           INT, 
+    Price_Paid              DECIMAL(10, 2),
     PRIMARY KEY(Item_UPC, Transaction_ID, Customer_Phone_Number),
-    FOREIGN KEY(Item_UPC) REFERENCES ITEM(UPC),
-    FOREIGN KEY(Transaction_ID) REFERENCES TRANSACTION(ID),
-    FOREIGN KEY(Customer_Phone_Number) REFERENCES CUSTOMER(Phone_Number),
-    CONSTRAINT order_info UNIQUE(Item_UPC, Amount_of_Item, Order_Date, Delivery_Status)
+    FOREIGN KEY(Item_UPC) REFERENCES ITEM(UPC)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    FOREIGN KEY(Transaction_ID) REFERENCES TRANSACTION(ID)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    FOREIGN KEY(Customer_Phone_Number) REFERENCES TRANSACTION(Customer_Phone_Number)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT purchase UNIQUE(Item_UPC, Transaction_ID, Customer_Phone_Number)
+);
+
+CREATE TABLE COUPON(
+    ID                      VARCHAR(30)     NOT NULL UNIQUE,
+    Discount_Amount         DECIMAL(10, 2),
+    Required_Item_Amount    INT,
+    Item_UPC                VARCHAR(30)     NOT NULL, 
+    PRIMARY KEY(ID),
+    FOREIGN KEY(Item_UPC) REFERENCES ITEM(UPC)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE, -- deletes COUPON relation if ITEM deleted
+);
+
+CREATE TABLE BOUGHT(
+    Item_UPC                VARCHAR(30)     NOT NULL,
+    Customer_Phone_Number   VARCHAR(10)     NOT NULL,
+    PRIMARY KEY(Item_UPC, Customer_Phone_Number),
+    FOREIGN KEY(Item_UPC) REFERENCES ITEM(UPC)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    FOREIGN KEY(Customer_Phone_Number) REFERENCES CUSTOMER(Phone_Number)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,  -- deletes bought relation if CUSTOMER deleted
+    CONSTRAINT customer_product_list UNIQUE(Item_UPC, Customer_Phone_Number)
+);
+
+CREATE TABLE DOWNLOADS (
+    Coupon_ID               VARCHAR(30)     NOT NULL,
+    Customer_Phone_Number   VARCHAR(10)     NOT NULL,
+    PRIMARY KEY(Coupon_ID, Customer_Phone_Number),
+    FOREIGN KEY(Coupon_ID) REFERENCES COUPON(ID)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,  -- deletes download relation if COUPON deleted
+    FOREIGN KEY(Customer_Phone_Number) REFERENCES CUSTOMER(Phone_Number)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,  -- deletes download relation if CUSTOMER deleted
+    CONSTRAINT customer_downloads UNIQUE(Coupon_ID, Customer_Phone_Number)
 );
