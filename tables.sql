@@ -62,11 +62,10 @@ CREATE TABLE LOCATION(
     Shelf_Number            INT         NOT NULL,
     Number_of_Items_Down    INT         NOT NULL,
     Item_UPC                VARCHAR(30),
-    PRIMARY KEY(Aisle_Number, Aisle_Side, Section_Number, Shelf_Number, Number_of_Items_Down, Item_UPC), 
+    PRIMARY KEY(Aisle_Number, Aisle_Side, Section_Number, Shelf_Number, Number_of_Items_Down), 
     FOREIGN KEY(Item_UPC) REFERENCES ITEM(UPC)
         ON UPDATE CASCADE
-        ON DELETE SET NULL,
-    CONSTRAINT item_location UNIQUE (Aisle_Number, Aisle_Side, Section_Number, Shelf_Number, Number_of_Items_Down)
+        ON DELETE SET NULL
 );
 
 CREATE TABLE EXPIRATION(
@@ -75,7 +74,7 @@ CREATE TABLE EXPIRATION(
     PRIMARY KEY(Item_UPC, Expiration_Date),
     FOREIGN KEY(Item_UPC) REFERENCES ITEM(UPC)
         ON UPDATE CASCADE
-        ON DELETE CASCADE, -- deletes expiration relation if item deleted
+        ON DELETE CASCADE -- deletes expiration relation if item deleted
 );
 
 CREATE TABLE DELIVERY(
@@ -116,8 +115,7 @@ CREATE TABLE TRANSACTION(
     PRIMARY KEY(ID, Customer_Phone_Number),
     FOREIGN KEY(Customer_Phone_Number) REFERENCES CUSTOMER(Phone_Number)
         ON UPDATE CASCADE
-        ON DELETE RESTRICT,
-    CONSTRAINT transaction UNIQUE(ID, Transaction_ID)
+        ON DELETE RESTRICT
 );
 
 CREATE TABLE PURCHASE(
@@ -135,8 +133,7 @@ CREATE TABLE PURCHASE(
         ON DELETE RESTRICT,
     FOREIGN KEY(Customer_Phone_Number) REFERENCES TRANSACTION(Customer_Phone_Number)
         ON UPDATE CASCADE
-        ON DELETE RESTRICT,
-    CONSTRAINT purchase UNIQUE(Item_UPC, Transaction_ID, Customer_Phone_Number)
+        ON DELETE RESTRICT
 );
 
 CREATE TABLE COUPON(
@@ -147,7 +144,7 @@ CREATE TABLE COUPON(
     PRIMARY KEY(ID),
     FOREIGN KEY(Item_UPC) REFERENCES ITEM(UPC)
         ON UPDATE CASCADE
-        ON DELETE CASCADE, -- deletes COUPON relation if ITEM deleted
+        ON DELETE CASCADE -- deletes COUPON relation if ITEM deleted
 );
 
 CREATE TABLE BOUGHT(
@@ -159,8 +156,7 @@ CREATE TABLE BOUGHT(
         ON DELETE RESTRICT,
     FOREIGN KEY(Customer_Phone_Number) REFERENCES CUSTOMER(Phone_Number)
         ON UPDATE CASCADE
-        ON DELETE CASCADE,  -- deletes bought relation if CUSTOMER deleted
-    CONSTRAINT customer_product_list UNIQUE(Item_UPC, Customer_Phone_Number)
+        ON DELETE CASCADE  -- deletes bought relation if CUSTOMER deleted
 );
 
 CREATE TABLE DOWNLOADS (
@@ -172,6 +168,5 @@ CREATE TABLE DOWNLOADS (
         ON DELETE CASCADE,  -- deletes download relation if COUPON deleted
     FOREIGN KEY(Customer_Phone_Number) REFERENCES CUSTOMER(Phone_Number)
         ON UPDATE CASCADE
-        ON DELETE CASCADE,  -- deletes download relation if CUSTOMER deleted
-    CONSTRAINT customer_downloads UNIQUE(Coupon_ID, Customer_Phone_Number)
+        ON DELETE CASCADE  -- deletes download relation if CUSTOMER deleted
 );
